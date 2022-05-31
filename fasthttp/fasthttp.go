@@ -8,19 +8,19 @@ import (
 )
 
 type Core struct {
-	bind 	string
-	server 	*fasthttp.Server
+	bind   string
+	server *fasthttp.Server
 }
 
 func New(bind string) *Core {
-	
+
 	server := new(fasthttp.Server)
 
 	h := parseHandler
 	server.Handler = h
-	
+
 	return &Core{
-		bind: bind,	
+		bind:   bind,
 		server: server,
 	}
 }
@@ -51,8 +51,8 @@ func parseHandler(ctx *fasthttp.RequestCtx) {
 
 	resp := Response{
 		Message: "OK",
-		Code: fasthttp.StatusOK,
-		Book: &d,
+		Code:    fasthttp.StatusOK,
+		Book:    &d,
 	}
 	b, err := json.Marshal(resp)
 	if err != nil {
@@ -64,8 +64,3 @@ func parseHandler(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("application/json")
 	ctx.Write(b)
 }
-
-
-
-
-

@@ -38,7 +38,7 @@ func Benchmark(b *testing.B) {
 func doParse(client *fasthttp.Client, b *testing.B) {
 
 	u := &httpjson.Book{
-		ID: "1338",
+		ID:    "1338",
 		Title: "Lorem ipsum dolor sit amet, consectetur adipiscing eli",
 		Price: 3.21,
 	}
@@ -47,7 +47,7 @@ func doParse(client *fasthttp.Client, b *testing.B) {
 	require.NoError(b, err)
 
 	var (
-		req = fasthttp.AcquireRequest()
+		req  = fasthttp.AcquireRequest()
 		resp = fasthttp.AcquireResponse()
 	)
 	req.SetRequestURI("http://localhost:8080/")
@@ -63,6 +63,6 @@ func doParse(client *fasthttp.Client, b *testing.B) {
 	var r httpjson.Response
 	err = json.Unmarshal(resp.Body(), &r)
 	require.NoError(b, err)
-	
+
 	fasthttp.ReleaseResponse(resp)
 }
