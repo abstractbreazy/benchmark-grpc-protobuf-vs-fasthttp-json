@@ -13,7 +13,6 @@ type Core struct {
 }
 
 func New(bind string) *Core {
-
 	server := new(fasthttp.Server)
 
 	h := parseHandler
