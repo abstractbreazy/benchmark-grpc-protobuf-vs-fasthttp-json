@@ -12,9 +12,8 @@ import (
 // ============================================== //
 // cpu: Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz  //
 //                                                //
-// create_account-4    3.0 ms/op                  //
-// deposit-4           3.3 ms/op                  //
-// withdraw-4          3.3 ms/op                  //
+// test0           3.0 ms/op                  	  //
+// test1           3.3 ms/op                  	  //
 // ============================================== //
 func Benchmark(b *testing.B) {
 
