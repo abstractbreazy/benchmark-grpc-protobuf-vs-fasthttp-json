@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package proto;
+
+service API {
+	rpc Parse(Book) returns (Response) {}
+}
+
+message Book {
+	string id = 1;
+	string title = 2;
+	fixed64 price = 3;
+}
+
+message Response {
+	string message = 1;
+	uint64 code = 2;
+	Book book = 3;
+}
