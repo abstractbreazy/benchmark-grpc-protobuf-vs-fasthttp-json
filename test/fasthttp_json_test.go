@@ -9,15 +9,24 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// ============================================== //
-// cpu: Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz  //
-//                                                //
-// test0           3.0 ms/op                  	  //
-// test1           3.3 ms/op                  	  //
-// ============================================== //
-func Benchmark(b *testing.B) {
+// ============================================================================================================ //				
+// cpu: Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz  											  					//
+//                                                											  					//
+// BenchmarkFastHTTPJson									  										      		//
+// BenchmarkFastHTTPJson-8            10000             66033 ns/op            2362 B/op         42 allocs/op   //
+// BenchmarkFastHTTPJson-8            10000             65521 ns/op            2363 B/op         42 allocs/op   //
+// BenchmarkFastHTTPJson-8            10000             64357 ns/op            2361 B/op         42 allocs/op	//
+// BenchmarkFastHTTPJson-8            10000             65077 ns/op            2362 B/op         42 allocs/op	//
+// BenchmarkFastHTTPJson-8            10000             67810 ns/op            2363 B/op         42 allocs/op	//
+// ============================================================================================================ //
+func BenchmarkFastHTTPJson(b *testing.B) {
 
-	core := httpjson.New(":8080")
+	// var l, err = net.Listen("tcp", "127.0.0.1:0") // arbitrary port
+	// require.NoError(b, err)
+
+	// defer l.Close()
+
+	core := httpjson.New("127.0.0.1:8080")
 	go func() {
 		err := core.ListenAndServe()
 		require.NoError(b, err)
@@ -29,12 +38,16 @@ func Benchmark(b *testing.B) {
 	}()
 
 	client := &fasthttp.Client{}
+
+	b.ResetTimer()
+	b.ReportAllocs()
+
 	for n := 0; n < b.N; n++ {
 		doParse(client, b)
 	}
 }
 
-func doParse(client *fasthttp.Client, b *testing.B) {
+func doParse(client *fasthttp.Client, /*l net.Listener*/ b *testing.B) {
 
 	u := &httpjson.Book{
 		ID:    "1338",
@@ -49,7 +62,8 @@ func doParse(client *fasthttp.Client, b *testing.B) {
 		req  = fasthttp.AcquireRequest()
 		resp = fasthttp.AcquireResponse()
 	)
-	req.SetRequestURI("http://localhost:8080/")
+
+	req.SetRequestURI("http://127.0.0.1:8080")
 	req.Header.SetMethod(fasthttp.MethodPost)
 	req.Header.SetContentType("application/json")
 	req.SetBodyRaw(bt)
