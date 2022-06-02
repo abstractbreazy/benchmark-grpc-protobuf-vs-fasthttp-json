@@ -11,7 +11,7 @@ import (
 	"google.golang.org/grpc"
 )
 
-// ============================================================================================================ //				
+// ============================================================================================================ //
 // cpu: Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz  											  					//
 //                                                											  					//
 // BenchmarkGRPCProtobuf									  										      		//
@@ -28,9 +28,9 @@ type client struct {
 }
 
 func NewClient(bind string, b *testing.B) *client {
-	
+
 	var (
-		c = new(client)
+		c   = new(client)
 		err error
 	)
 	c.conn, err = grpc.Dial(bind, grpc.WithInsecure())
@@ -46,18 +46,18 @@ func (c *client) Close() error {
 }
 
 func BenchmarkGRPCProtobuf(b *testing.B) {
+	b.Skip()
 
 	bind := "127.0.0.1:8080"
 	var (
-		grpc 	 server.GRPCServer
-		
+		grpc server.GRPCServer
 	)
 	require.NoError(b, grpc.Start(bind))
 
-	// defer func ()  {
-	// 	err := grpc.Close()
-	// 	require.NoError(b, err)
-	// }()
+	defer func() {
+		err := grpc.Close()
+		require.NoError(b, err)
+	}()
 
 	defer grpc.Close()
 
@@ -81,8 +81,8 @@ func BenchmarkGRPCProtobuf(b *testing.B) {
 func doRequest(c *client, b *testing.B) {
 
 	var (
-		ctx = context.Background()
-		err error
+		ctx  = context.Background()
+		err  error
 		resp *pb.Response
 	)
 
@@ -96,11 +96,10 @@ func doRequest(c *client, b *testing.B) {
 	assert.EqualValues(b,
 		pb.Response{
 			Book: &pb.Book{
-				Id: "1338",
+				Id:    "1338",
 				Title: "Lorem ipsum dolor sit amet, consectetur adipiscing eli",
 				Price: 3,
-			},	
+			},
 		}.Book, resp.Book)
 
 }
-

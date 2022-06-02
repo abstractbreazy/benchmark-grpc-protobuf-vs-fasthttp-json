@@ -16,12 +16,13 @@ type Server struct {
 func New() *Server {
 	return &Server{}
 }
+
 // Parse handler.
 func (s *Server) Parse(ctx context.Context, in *pb.Book) (*pb.Response, error) {
 	return &pb.Response{
 		Message: "200",
-		Code: 0,
-		Book: in,
+		Code:    0,
+		Book:    in,
 	}, nil
 
 }

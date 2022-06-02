@@ -2,52 +2,45 @@ package benchmarks
 
 import (
 	"encoding/json"
+	"net"
 	"testing"
+	"time"
 
 	httpjson "github.com/abstractbreazy/benchmark-grpc-protobuf-vs-fasthttp-json/fasthttp"
-	"github.com/stretchr/testify/require"
+
 	"github.com/valyala/fasthttp"
 )
 
-// ============================================================================================================ //				
-// cpu: Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz  											  					//
-//                                                											  					//
-// BenchmarkFastHTTPJson									  										      		//
-// BenchmarkFastHTTPJson-8            10000             66033 ns/op            2362 B/op         42 allocs/op   //
-// BenchmarkFastHTTPJson-8            10000             65521 ns/op            2363 B/op         42 allocs/op   //
-// BenchmarkFastHTTPJson-8            10000             64357 ns/op            2361 B/op         42 allocs/op	//
-// BenchmarkFastHTTPJson-8            10000             65077 ns/op            2362 B/op         42 allocs/op	//
-// BenchmarkFastHTTPJson-8            10000             67810 ns/op            2363 B/op         42 allocs/op	//
-// ============================================================================================================ //
-func BenchmarkFastHTTPJson(b *testing.B) {
+func startHTTPServer(b *testing.B, l net.Listener) {
+	var s = httpjson.New()
+	s.Addr = l.Addr().String()
+	s.Serve(l)
+}
 
-	// var l, err = net.Listen("tcp", "127.0.0.1:0") // arbitrary port
-	// require.NoError(b, err)
+func BenchmarkListener(b *testing.B) {
 
-	// defer l.Close()
+	var l, err = net.Listen("tcp", "127.0.0.1:0") // aritrary port
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer l.Close()
 
-	core := httpjson.New("127.0.0.1:8080")
-	go func() {
-		err := core.ListenAndServe()
-		require.NoError(b, err)
-	}()
+	go startHTTPServer(b, l)
+	time.Sleep(100 * time.Millisecond) // sever starting timeout
 
-	defer func() {
-		err := core.Close()
-		require.NoError(b, err)
-	}()
+	b.ReportAllocs()
+	b.ResetTimer()
 
 	client := &fasthttp.Client{}
-
-	b.ResetTimer()
-	b.ReportAllocs()
-
 	for n := 0; n < b.N; n++ {
-		doParse(client, b)
+		b.Logf("Addr: %s", l.Addr().String())
+		//b.Logf("Domain: %v", l.Addr().(*net.TCPAddr).IP.String())
+
+		doHTTPRequest(client, b, l.Addr().String())
 	}
 }
 
-func doParse(client *fasthttp.Client, /*l net.Listener*/ b *testing.B) {
+func doHTTPRequest(client *fasthttp.Client, b *testing.B, addr string) {
 
 	u := &httpjson.Book{
 		ID:    "1338",
@@ -56,26 +49,38 @@ func doParse(client *fasthttp.Client, /*l net.Listener*/ b *testing.B) {
 	}
 
 	bt, err := json.Marshal(u)
-	require.NoError(b, err)
+	if err != nil {
+		b.Fatalf("unable to marshal json: %v", err)
+	}
 
 	var (
 		req  = fasthttp.AcquireRequest()
 		resp = fasthttp.AcquireResponse()
 	)
 
-	req.SetRequestURI("http://127.0.0.1:8080")
+	req.SetRequestURI("http://" + addr)
 	req.Header.SetMethod(fasthttp.MethodPost)
 	req.Header.SetContentType("application/json")
 	req.SetBodyRaw(bt)
 
 	err = client.Do(req, resp)
-	require.NoError(b, err)
+	if err != nil {
+		b.Fatalf("http request failed: %v", err)
+	}
 
 	defer resp.Body()
 
 	var r httpjson.Response
 	err = json.Unmarshal(resp.Body(), &r)
-	require.NoError(b, err)
+	if err != nil {
+		b.Fatalf("unable to unmarshal json: %v", err)
+	}
+
+	b.Logf("resp: %v", r)
+
+	if r.Message != "OK" || r.Code != 200 || r.Book.ID != "1338" {
+		b.Fatalf("wrong http response: %v", err)
+	}
 
 	fasthttp.ReleaseResponse(resp)
 }
