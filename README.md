@@ -24,7 +24,8 @@ Benchmark_FastHTTP_JSON-8          10000             61367 ns/op            2398
 Benchmark_FastHTTP_JSON-8          10000             61126 ns/op            2403 B/op         45 allocs/op
 Benchmark_FastHTTP_JSON-8          10000             61228 ns/op            2401 B/op         45 allocs/op
 Benchmark_FastHTTP_JSON-8          10000             63710 ns/op            2403 B/op         45 allocs/op
-Benchmark_FastHTTP_JSON-8          10000             61296 ns/op            2407 B/op         45 allocs/op									Benchmark_GRPC_Protobuf																							
+Benchmark_FastHTTP_JSON-8          10000             61296 ns/op            2407 B/op         45 allocs/op
+Benchmark_GRPC_Protobuf																						
 Benchmark_GRPC_Protobuf-8          10000             27345 ns/op            9010 B/op        161 allocs/op
 Benchmark_GRPC_Protobuf-8          10000             26052 ns/op            8987 B/op        161 allocs/op
 Benchmark_GRPC_Protobuf-8          10000             25251 ns/op            8986 B/op        161 allocs/op
