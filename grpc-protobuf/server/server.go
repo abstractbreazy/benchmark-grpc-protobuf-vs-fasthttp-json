@@ -20,8 +20,8 @@ func New() *Server {
 // Parse handler.
 func (s *Server) Parse(ctx context.Context, in *pb.Book) (*pb.Response, error) {
 	return &pb.Response{
-		Message: "200",
-		Code:    0,
+		Message: "OK",
+		Code:    200,
 		Book:    in,
 	}, nil
 

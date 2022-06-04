@@ -1,105 +1,72 @@
-package benchmarks
+package test
 
 import (
 	"context"
+	"log"
 	"testing"
+	"time"
 
-	server "github.com/abstractbreazy/benchmark-grpc-protobuf-vs-fasthttp-json/grpc-protobuf"
-	pb "github.com/abstractbreazy/benchmark-grpc-protobuf-vs-fasthttp-json/grpc-protobuf/proto/gen"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
+	srv "github.com/abstractbreazy/benchmark-grpc-protobuf-vs-fasthttp-json/grpc-protobuf"
+	"github.com/abstractbreazy/benchmark-grpc-protobuf-vs-fasthttp-json/grpc-protobuf/client"
+	proto "github.com/abstractbreazy/benchmark-grpc-protobuf-vs-fasthttp-json/grpc-protobuf/proto/gen"
 )
 
-// ============================================================================================================ //
-// cpu: Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz  											  					//
-//                                                											  					//
-// BenchmarkGRPCProtobuf									  										      		//
-// BenchmarkGRPCProtobuf-8            10000                         											//
-// BenchmarkGRPCProtobuf-8            10000              														//
-// BenchmarkGRPCProtobuf-8            10000             														//
-// BenchmarkGRPCProtobuf-8            10000             														//
-// BenchmarkGRPCProtobuf-8            10000             														//
-// ============================================================================================================ //
-
-type client struct {
-	conn *grpc.ClientConn
-	api  pb.APIClient
-}
-
-func NewClient(bind string, b *testing.B) *client {
-
-	var (
-		c   = new(client)
-		err error
-	)
-	c.conn, err = grpc.Dial(bind, grpc.WithInsecure())
-	require.NoError(b, err)
-
-	c.api = pb.NewAPIClient(c.conn)
-
-	return c
-}
-
-func (c *client) Close() error {
-	return c.conn.Close()
-}
-
-func BenchmarkGRPCProtobuf(b *testing.B) {
-	b.Skip()
-
-	bind := "127.0.0.1:8080"
-	var (
-		grpc server.GRPCServer
-	)
-	require.NoError(b, grpc.Start(bind))
-
-	defer func() {
-		err := grpc.Close()
-		require.NoError(b, err)
+func init() {
+	go func() {
+		if err := srv.New().Start(); err != nil {
+			log.Fatalf("failed to start grpc server %s", err)
+		}
 	}()
-
-	defer grpc.Close()
-
-	client := NewClient(bind, b)
-
-	defer client.Close()
-
-	// defer func() {
-	// 	err := client.Close()
-	// 	require.NoError(b, err)
-	// }()
-
-	b.ResetTimer()
-	b.ReportAllocs()
-
-	for n := 0; n < b.N; n++ {
-		doRequest(client, b)
-	}
+	time.Sleep(100 * time.Microsecond)
 }
 
-func doRequest(c *client, b *testing.B) {
+// ================================================================================================================ //
+// cpu: Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz																	//
+// Benchmark_GRPC_Protobuf																							//
+// Benchmark_GRPC_Protobuf-8          10000             27345 ns/op            9010 B/op        161 allocs/op		//
+// Benchmark_GRPC_Protobuf-8          10000             26052 ns/op            8987 B/op        161 allocs/op		//
+// Benchmark_GRPC_Protobuf-8          10000             25251 ns/op            8986 B/op        161 allocs/op		//
+// Benchmark_GRPC_Protobuf-8          10000             24900 ns/op            8985 B/op        161 allocs/op		//
+// Benchmark_GRPC_Protobuf-8          10000             24751 ns/op            8980 B/op        161 allocs/op		//
+// ================================================================================================================ //
 
+func Benchmark_GRPC_Protobuf(b *testing.B) {
+	listenAddr := "localhost:15000"
+	// init client
+	c, err := client.NewGRPCClient(listenAddr)
+	if err != nil {
+		b.Fatal(err)
+	}
+	for i := 0; i < 5; i++ {
+		doGRPCRequest(c, b)
+	}
+	b.ResetTimer()
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			doGRPCRequest(c, b)
+		}
+	})
+}
+
+func doGRPCRequest(client proto.APIClient, b *testing.B) {
 	var (
 		ctx  = context.Background()
 		err  error
-		resp *pb.Response
+		resp *proto.Response
 	)
 
-	resp, err = c.api.Parse(ctx, &pb.Book{
+	resp, err = client.Parse(ctx, &proto.Book{
 		Id:    "1338",
 		Title: "Lorem ipsum dolor sit amet, consectetur adipiscing eli",
 		Price: 3,
 	})
-	require.NoError(b, err)
+	if err != nil {
+		b.Fatal(err)
+	}
 
-	assert.EqualValues(b,
-		pb.Response{
-			Book: &pb.Book{
-				Id:    "1338",
-				Title: "Lorem ipsum dolor sit amet, consectetur adipiscing eli",
-				Price: 3,
-			},
-		}.Book, resp.Book)
+	if resp == nil || resp.Code != 200 || resp.Book == nil || resp.Book.Id != "1338" {
+		b.Fatalf("wrong grpc response: %v\n", resp)
+	}
 
 }

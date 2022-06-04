@@ -7,9 +7,8 @@ import (
 )
 
 type Core struct {
-	listener net.Listener
-	Addr     string
-	server   *fasthttp.Server
+	Addr   string
+	server *fasthttp.Server
 }
 
 func New() *Core {

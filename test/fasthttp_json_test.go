@@ -1,4 +1,4 @@
-package benchmarks
+package test
 
 import (
 	"encoding/json"
@@ -17,7 +17,16 @@ func startHTTPServer(b *testing.B, l net.Listener) {
 	s.Serve(l)
 }
 
-func BenchmarkListener(b *testing.B) {
+// ================================================================================================================ //
+// cpu: Intel(R) Core(TM) i5-9300H CPU @ 2.40GHz																	//
+// Benchmark_FastHTTP_JSON																							//
+// Benchmark_FastHTTP_JSON-8            10000             61367 ns/op            2398 B/op         45 allocs/op		//
+// Benchmark_FastHTTP_JSON-8            10000             61126 ns/op            2403 B/op         45 allocs/op		//
+// Benchmark_FastHTTP_JSON-8            10000             61228 ns/op            2401 B/op         45 allocs/op		//
+// Benchmark_FastHTTP_JSON-8            10000             63710 ns/op            2403 B/op         45 allocs/op		//
+// Benchmark_FastHTTP_JSON-8            10000             61296 ns/op            2407 B/op         45 allocs/op		//
+// ================================================================================================================ //
+func Benchmark_FastHTTP_JSON(b *testing.B) {
 
 	var l, err = net.Listen("tcp", "127.0.0.1:0") // aritrary port
 	if err != nil {
@@ -33,9 +42,6 @@ func BenchmarkListener(b *testing.B) {
 
 	client := &fasthttp.Client{}
 	for n := 0; n < b.N; n++ {
-		b.Logf("Addr: %s", l.Addr().String())
-		//b.Logf("Domain: %v", l.Addr().(*net.TCPAddr).IP.String())
-
 		doHTTPRequest(client, b, l.Addr().String())
 	}
 }
@@ -75,8 +81,6 @@ func doHTTPRequest(client *fasthttp.Client, b *testing.B, addr string) {
 	if err != nil {
 		b.Fatalf("unable to unmarshal json: %v", err)
 	}
-
-	b.Logf("resp: %v", r)
 
 	if r.Message != "OK" || r.Code != 200 || r.Book.ID != "1338" {
 		b.Fatalf("wrong http response: %v", err)
